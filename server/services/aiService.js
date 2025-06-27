@@ -138,7 +138,7 @@ Respond in JSON format:
     });
 
     const text = response.data.response;
-    console.log("📤 Ollama Response:", text);
+   // console.log("📤 Ollama Response:", text);
 
     const result = extractJson(text);
     return result;
