@@ -12,7 +12,18 @@ const aiRoutes = require('./routes/ai');
 const app = express();
 
 // Middleware
-app.use(cors());
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'https://benevolent-medovik-f06e50.netlify.app', // ✅ exact frontend URL
+  credentials: true // ✅ allow cookies, Authorization headers, etc.
+}));
+
+
+
+
+
+
 app.use(express.json());
 app.use(morgan('dev'));
 
