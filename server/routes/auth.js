@@ -6,15 +6,7 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 // Debug middleware for auth routes
-router.use((req, res, next) => {
-  console.log('Auth Route:', {
-    method: req.method,
-    path: req.path,
-    body: req.body,
-    headers: req.headers
-  });
-  next();
-});
+
 
 // Register user
 router.post('/register', [
