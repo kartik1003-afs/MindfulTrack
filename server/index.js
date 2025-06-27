@@ -16,16 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Debug middleware
-app.use((req, res, next) => {
-  console.log('Incoming request:', {
-    method: req.method,
-    path: req.path,
-    body: req.body,
-    headers: req.headers
-  });
-  next();
-});
+
 
 // Root route
 app.get('/', (req, res) => {
