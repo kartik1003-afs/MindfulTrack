@@ -12,7 +12,7 @@ const aiRoutes = require('./routes/ai');
 const app = express();
 
 // Middleware
-const cors = require('cors');
+
 
 app.use(cors({
   origin: 'https://benevolent-medovik-f06e50.netlify.app', // ✅ exact frontend URL
