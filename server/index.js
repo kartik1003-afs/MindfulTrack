@@ -1,10 +1,14 @@
-require('dotenv').config();
+require('dotenv').config({ path: './server/.env' });
+console.log('🔍 Environment variables loaded:');
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
 
-// Import routes
 const authRoutes = require('./routes/auth');
 const journalRoutes = require('./routes/journal');
 const aiRoutes = require('./routes/ai');
@@ -12,22 +16,12 @@ const aiRoutes = require('./routes/ai');
 const app = express();
 
 // Middleware
-
-
 app.use(cors({
-  origin: 'https://benevolent-medovik-f06e50.netlify.app', // ✅ exact frontend URL
-  credentials: true // ✅ allow cookies, Authorization headers, etc.
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true
 }));
-
-
-
-
-
-
 app.use(express.json());
 app.use(morgan('dev'));
-
-
 
 // Root route
 app.get('/', (req, res) => {
@@ -35,11 +29,9 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-// app.use('/api/auth', authRoutes);
-app.use('/auth', authRoutes);
-
-app.use('/journal', journalRoutes);
-app.use('/ai', aiRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/journal', journalRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -47,7 +39,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
   res.status(500).json({ 
@@ -56,21 +48,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// MongoDB connection with retry
+// Connect to MongoDB
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('✅ Connected to MongoDB');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
-    // Retry connection after 5 seconds
+    console.error('❌ MongoDB connection error:', error.message);
     setTimeout(connectDB, 5000);
   }
 };
-
 connectDB();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
