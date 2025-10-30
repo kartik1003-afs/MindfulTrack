@@ -55,13 +55,13 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
+    console.error(' MongoDB connection error:', error.message);
     setTimeout(connectDB, 5000);
   }
 };
 connectDB();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000 ;
+app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
