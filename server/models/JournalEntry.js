@@ -35,7 +35,7 @@ const journalEntrySchema = new mongoose.Schema({
   }
 });
 
-// Index for efficient querying
+
 journalEntrySchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model('JournalEntry', journalEntrySchema); 
