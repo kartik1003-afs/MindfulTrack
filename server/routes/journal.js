@@ -224,7 +224,7 @@ router.get('/weekly-summary', auth, async (req, res) => {
       return res.json({ message: 'No entries found for the past week' });
     }
 
-    const summary = await generateWeeklySummary(entries);
+    const summary = await generateWeeklySummary(entries, req.user._id);
     res.json({ summary, entries });
   } catch (error) {
     console.error('Weekly Summary Error:', error);
