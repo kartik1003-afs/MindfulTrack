@@ -3,7 +3,6 @@ const router = express.Router();
 const { analyzeSentiment, generateWeeklySummary } = require('../services/aiService');
 const auth = require('../middleware/auth');
 
-// Analyze sentiment of a journal entry
 router.post('/analyze', auth, async (req, res) => {
   try {
     const { content } = req.body;
@@ -22,7 +21,16 @@ router.post('/analyze', auth, async (req, res) => {
 // Generate weekly summary
 router.get('/weekly-summary', auth, async (req, res) => {
   try {
-    const summary = await generateWeeklySummary(req.user._id);
+    const JournalEntry = require('../models/JournalEntry');
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const entries = await JournalEntry.find({
+      user: req.user._id,
+      createdAt: { $gte: oneWeekAgo }
+    }).sort({ createdAt: 1 });
+
+    const summary = await generateWeeklySummary(entries, req.user._id);
     res.json(summary);
   } catch (error) {
     console.error('Error generating weekly summary:', error);
