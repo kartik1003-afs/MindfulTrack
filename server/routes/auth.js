@@ -198,6 +198,14 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Temporary in-memory OTP store
+const otpStore = new Map();
+
+// Helper to generate 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 // Register user
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
@@ -210,11 +218,23 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, name } = req.body;
+    const { email, password, name, useOTP } = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: 'User already exists' });
+    }
+
+    if (useOTP) {
+      const otp = generateOTP();
+      otpStore.set(email, {
+        type: 'register',
+        otp,
+        expires: Date.now() + 5 * 60 * 1000,
+        data: { name, email, password }
+      });
+      console.log(`🔑 OTP generated for register (${email}): ${otp}`);
+      return res.status(200).json({ otpSent: true });
     }
 
     user = new User({ email, password, name });
@@ -248,11 +268,23 @@ router.post('/login', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, password, useOTP } = req.body;
 
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    if (useOTP) {
+      const otp = generateOTP();
+      otpStore.set(email, {
+        type: 'login',
+        otp,
+        expires: Date.now() + 5 * 60 * 1000,
+        data: { email }
+      });
+      console.log(`🔑 OTP generated for login (${email}): ${otp}`);
+      return res.status(200).json({ otpSent: true });
     }
 
     const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -268,6 +300,74 @@ router.post('/login', [
     });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    const record = otpStore.get(email);
+    if (!record || record.otp !== otp || record.expires < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // OTP is valid!
+    otpStore.delete(email);
+
+    let user;
+    if (record.type === 'register') {
+      const { name, email: rEmail, password } = record.data;
+      user = new User({ email: rEmail, password, name });
+      await user.save();
+    } else {
+      user = await User.findOne({ email });
+    }
+
+    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const refreshToken = jwt.sign({ userId: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.json({
+      accessToken,
+      refreshToken,
+      user: { id: user._id, email: user.email, name: user.name }
+    });
+  } catch (error) {
+    console.error('OTP Verification error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Resend OTP
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const record = otpStore.get(email);
+    if (!record) {
+      return res.status(400).json({ message: 'No pending OTP verification found' });
+    }
+
+    const otp = generateOTP();
+    record.otp = otp;
+    record.expires = Date.now() + 5 * 60 * 1000;
+    otpStore.set(email, record);
+
+    console.log(`🔑 Resent OTP (${email}): ${otp}`);
+    res.json({ message: 'OTP resent successfully' });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
