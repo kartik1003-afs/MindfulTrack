@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = '/api';
+// Use env variable or fallback to localhost:5000
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const useJournalStore = create((set, get) => ({
   entries: [],
