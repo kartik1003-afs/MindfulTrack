@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import useAuthStore from '../store/authStore';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [useOTP, setUseOTP] = useState(false);
   const { login, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
-      navigate('/dashboard');
+    const result = await login(email, password, useOTP);
+    if (result.success) {
+      if (result.otpSent) {
+        navigate('/verify-otp', { state: { email, isLogin: true } });
+      } else {
+        navigate('/dashboard');
+      }
     }
   };
 
@@ -61,19 +68,44 @@ export default function Login() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm pr-10"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" aria-hidden="true" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" aria-hidden="true" />
+                  )}
+                </button>
               </div>
             </div>
+
+            {/* <div className="flex items-center">
+              <input
+                id="use-otp"
+                name="use-otp"
+                type="checkbox"
+                checked={useOTP}
+                onChange={(e) => setUseOTP(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <label htmlFor="use-otp" className="ml-2 block text-sm text-gray-900">
+                Use OTP verification for enhanced security
+              </label>
+            </div> */}
 
             <div>
               <button
@@ -81,7 +113,7 @@ export default function Login() {
                 disabled={isLoading}
                 className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? (useOTP ? 'Sending OTP...' : 'Signing in...') : (useOTP ? 'Send OTP' : 'Sign in')}
               </button>
             </div>
           </form>
