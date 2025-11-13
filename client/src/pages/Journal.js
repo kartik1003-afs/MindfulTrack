@@ -23,7 +23,7 @@ export default function Journal() {
 
   const filteredEntries = entries.filter(entry => {
     const matchesSearch = entry.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.aiFeedback.toLowerCase().includes(searchTerm.toLowerCase());
+                         (entry.aiFeedback || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesMood = !selectedMood || entry.mood === selectedMood;
     return matchesSearch && matchesMood;
   });
