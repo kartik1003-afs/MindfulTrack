@@ -272,6 +272,37 @@ export default function WeeklySummary() {
     };
   };
 
+  const sentimentOptions = {
+    responsive: true,
+    scales: {
+      y: {
+        min: -1,
+        max: 1,
+        ticks: {
+          stepSize: 0.5,
+          callback: function(value) {
+            if (value === 1) return '😊 Very Positive (1.0)';
+            if (value === 0.5) return '🙂 Positive (0.5)';
+            if (value === 0) return '😐 Neutral (0.0)';
+            if (value === -0.5) return '🙁 Negative (-0.5)';
+            if (value === -1) return '😢 Very Negative (-1.0)';
+            return '';
+          }
+        }
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const score = context.raw;
+            return ` Average Sentiment: ${score.toFixed(2)}`;
+          }
+        }
+      }
+    }
+  };
+
   const getTagFrequency = () => {
     const tagCount = entries.reduce((acc, entry) => {
       entry.tags.forEach(tag => {
@@ -310,13 +341,26 @@ export default function WeeklySummary() {
     );
   }
 
+  const getSummaryText = () => {
+    if (!weeklySummary) return null;
+    if (typeof weeklySummary.summary === 'string') {
+      return weeklySummary.summary;
+    }
+    if (weeklySummary.summary && typeof weeklySummary.summary.summary === 'string') {
+      return weeklySummary.summary.summary;
+    }
+    return null;
+  };
+
+  const summaryText = getSummaryText();
+
   return (
     <div className="space-y-6">
       <div className="card">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">Weekly Summary</h2>
-        {weeklySummary && weeklySummary.summary ? (
+        {summaryText ? (
           <div className="prose max-w-none">
-            <p className="text-gray-600 whitespace-pre-line">{weeklySummary.summary}</p>
+            <p className="text-gray-600 whitespace-pre-line">{summaryText}</p>
           </div>
         ) : (
           <p className="text-gray-600">No summary available for this week.</p>
@@ -338,7 +382,7 @@ export default function WeeklySummary() {
           {entries.length === 0 ? (
             <p className="text-gray-500">No data for chart</p>
           ) : (
-            <Line data={getSentimentByDay()} />
+            <Line data={getSentimentByDay()} options={sentimentOptions} />
           )}
         </div>
       </div>
@@ -369,7 +413,7 @@ export default function WeeklySummary() {
             <h4 className="text-sm font-medium text-gray-900">Average Sentiment Score</h4>
             <p className="mt-1 text-gray-600">
               {entries.length === 0
-                ? 'N/A'
+                ? '0.00 (Neutral)'
                 : (entries.reduce((acc, entry) => acc + entry.sentimentScore, 0) / entries.length).toFixed(2)}
             </p>
           </div>
