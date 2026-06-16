@@ -194,7 +194,6 @@ import {
 import useJournalStore from '../store/journalStore';
 import AIInsights from '../components/AIInsights';
 import GamificationDashboard from '../components/GamificationDashboard';
-import aiService from '../services/aiService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -211,7 +210,6 @@ ChartJS.register(
 export default function Dashboard() {
   const [content, setContent] = useState('');
   const [selectedTab, setSelectedTab] = useState('overview');
-  const [moodPrediction, setMoodPrediction] = useState(null);
   const {
     entries,
     weeklySummary,
@@ -359,23 +357,6 @@ export default function Dashboard() {
                 className="input-field min-h-[100px]"
                 required
               />
-              
-              {/* Real-time mood prediction */}
-              {content.trim() && (
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <h4 className="text-sm font-medium text-blue-800 mb-1">AI Mood Analysis Preview:</h4>
-                  {(() => {
-                    const prediction = aiService.predictMood(content);
-                    return (
-                      <div className="text-sm text-blue-700">
-                        <span className="capitalize font-medium">{prediction.mood}</span>
-                        <span className="ml-2 text-blue-600">({prediction.confidence}% confidence)</span>
-                        <p className="text-xs text-blue-600 mt-1">{prediction.analysis}</p>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
               
               <button type="submit" disabled={isLoading} className="btn-primary">
                 {isLoading ? 'Analyzing...' : 'Submit Entry'}
